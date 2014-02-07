@@ -3,7 +3,7 @@ require 'hiera/backend'
 class Hiera::Interpolate
   class << self
     INTERPOLATION = /%\{([^\}]*)\}/
-    METHOD_INTERPOLATION = /%\{(scope|hiera)\(['"]([^"']*)["']\)\}/
+    METHOD_INTERPOLATION = /%\{(scope|hiera|hiera_hash)\(['"]([^"']*)["']\)\}/
 
     def interpolate(data, recurse_guard, scope, extra_data)
       if data.is_a?(String) && (match = data.match(INTERPOLATION))
@@ -23,6 +23,7 @@ class Hiera::Interpolate
         case match[1]
         when 'hiera' then [:hiera_interpolate, match[2]]
         when 'scope' then [:scope_interpolate, match[2]]
+        when 'hiera_hash' then [:hiera_hash_interpolate, match[2]]
         end
       elsif (match = data.match(INTERPOLATION))
         [:scope_interpolate, match[1]]
@@ -44,5 +45,15 @@ class Hiera::Interpolate
       data.sub(METHOD_INTERPOLATION, value)
     end
     private :hiera_interpolate
+
+    def hiera_hash_interpolate(data, key, scope, extra_data)
+      value = Hiera::Backend.lookup(key, nil, scope, nil, :hash)
+      if value.is_a?(String)
+        data.sub(METHOD_INTERPOLATION, value)
+      else
+        value
+      end
+    end
+    private :hiera_hash_interpolate
   end
 end
