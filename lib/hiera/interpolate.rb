@@ -41,7 +41,11 @@ class Hiera::Interpolate
 
     def hiera_interpolate(data, key, scope, extra_data)
       value = Hiera::Backend.lookup(key, nil, scope, nil, :priority)
-      data.sub(METHOD_INTERPOLATION, value)
+      if value.is_a?(String)
+        data.sub(METHOD_INTERPOLATION, value)
+      else
+        data
+      end
     end
     private :hiera_interpolate
   end
